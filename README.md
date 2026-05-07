@@ -14,4 +14,4 @@
 
 - 如果考试注重学生的prompt能力，而不是撰写代码的能力：能够调用在AI网站，考生能够通过与AI交互实现答题。
 
-- 浏览器访问 http://www.TESTsys.xys。
+- 浏览器访问 http://www.TESTsys.xys

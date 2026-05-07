@@ -35,7 +35,7 @@ Tech Stack: Python Flask + SQLite + openpyxl + HTML/CSS/JS
 2. Run `pip install -r requirements.txt` from `backend/`
 3. Configure Nginx (see `nginx-testsys-server.conf`)
 4. Run `start.bat` to start backend
-5. Open http://localhost in browser
+5. Open http://www.TESTsys.xys in browser
 
 ### Teacher Accounts
 - Built-in teacher: ID=001, password=123

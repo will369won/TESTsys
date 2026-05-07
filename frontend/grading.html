@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阅卷 - AI智能考试系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e8ecf1 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #4A90D9 0%, #357ABD 100%);
+            color: white;
+            padding: 16px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header h1 { font-size: 1.3em; font-weight: 600; }
+        .header button {
+            background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35);
+            color: white; padding: 7px 16px; border-radius: 8px; cursor: pointer;
+            font-size: 0.88em; transition: all 0.2s; backdrop-filter: blur(4px);
+        }
+        .header button:hover { background: rgba(255,255,255,0.28); transform: translateY(-1px); }
+        .container { max-width: 1200px; margin: 24px auto; padding: 0 18px; }
+
+        /* Card */
+        .card {
+            background: rgba(255,255,255,0.80);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 12px rgba(74,144,217,0.06), 0 1px 3px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+        .card h2 {
+            color: #1e293b; margin-bottom: 16px; font-size: 1.1em; font-weight: 600;
+            border-bottom: 1.5px solid rgba(74,144,217,0.12); padding-bottom: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 9px 18px; border: none; border-radius: 10px; cursor: pointer;
+            font-size: 0.88em; font-weight: 500;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-primary { background: linear-gradient(135deg, #4A90D9, #357ABD); color: white; }
+        .btn-success { background: linear-gradient(135deg, #52c41a, #389e0d); color: white; }
+        .btn-info { background: linear-gradient(135deg, #4A90D9, #357ABD); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #faad14, #d48806); color: white; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(74,144,217,0.20); }
+        .btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Student list table */
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid rgba(226,232,240,0.6); }
+        th { background: rgba(248,250,252,0.7); font-weight: 600; color: #475569; font-size: 0.84em; }
+        td { font-size: 0.88em; color: #334155; }
+        tr:hover td { background: rgba(248,250,252,0.5); cursor: pointer; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.78em; font-weight: 500; }
+        .badge-done { background: rgba(82,196,26,0.12); color: #389e0d; }
+        .badge-progress { background: rgba(255,193,7,0.12); color: #856404; }
+
+        /* Grading layout: left questions, right scores */
+        .grading-layout {
+            display: none;
+            gap: 20px;
+        }
+        .grading-layout.show { display: flex; }
+        .grading-left { flex: 1; min-width: 0; }
+        .grading-right {
+            width: 280px;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.7);
+            box-shadow: 0 2px 12px rgba(74,144,217,0.06);
+            position: sticky;
+            top: 90px;
+            align-self: flex-start;
+        }
+        .grading-right h3 {
+            color: #1e293b; font-size: 1em; font-weight: 600;
+            padding-bottom: 10px; border-bottom: 1.5px solid rgba(74,144,217,0.12);
+            margin-bottom: 12px;
+        }
+        .score-summary { margin-bottom: 12px; }
+        .score-summary .total {
+            font-size: 1.3em; font-weight: 700; color: #4A90D9;
+            text-align: center; padding: 10px; margin-bottom: 10px;
+        }
+        .score-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid rgba(226,232,240,0.4);
+            font-size: 0.85em;
+        }
+        .score-item .q-label { color: #64748b; }
+        .score-item .q-score { font-weight: 600; color: #1e293b; }
+        .score-item .q-score input {
+            width: 60px; padding: 4px 6px; border: 1.5px solid #e2e8f0;
+            border-radius: 6px; font-size: 0.9em; text-align: right;
+        }
+        .score-item .q-score input:focus { outline: none; border-color: #4A90D9; }
+        .score-item .q-max { color: #94a3b8; font-size: 0.85em; }
+        .student-save-row { display: flex; gap: 8px; margin-top: 14px; justify-content: center; }
+
+        /* Question display */
+        .q-block {
+            background: rgba(248,250,252,0.8);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 14px;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .q-block h4 { color: #1e293b; margin-bottom: 6px; font-size: 0.95em; }
+        .q-block .q-type-label { font-size: 0.78em; color: #4A90D9; font-weight: 500; }
+        .q-block .q-content { font-size: 0.92em; line-height: 1.7; color: #334155; margin: 8px 0; }
+        .q-block .q-meta { font-size: 0.84em; color: #64748b; }
+        .q-block .q-meta .correct { color: #52c41a; font-weight: 500; }
+        .q-block .q-meta .wrong { color: #ff4d4f; font-weight: 500; }
+        .q-block .q-meta .pending { color: #faad14; font-weight: 500; }
+
+        /* Cover page */
+        .cover-page { display: block; }
+        .cover-page.hidden { display: none; }
+
+        /* Action bar */
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+
+        /* Toast */
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 24px; border-radius: 12px; color: white; font-size: 0.95em; z-index: 9999; opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(-8px); backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast-success { background: rgba(82,196,26,0.9); }
+        .toast-error { background: rgba(255,77,79,0.9); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        @media (max-width: 768px) {
+            .grading-layout { flex-direction: column; }
+            .grading-right { width: 100%; position: static; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📝 阅卷系统</h1>
+        <div>
+            <span id="examTitle" style="font-size:0.9em;opacity:0.9;margin-right:14px;"></span>
+            <button onclick="window.location.href='teacher.html'">← 返回教师管理</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Cover page: student list -->
+        <div class="card cover-page" id="coverPage">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <h2>📋 学生列表</h2>
+                <span id="studentCount" style="font-size:0.88em;color:#94a3b8;"></span>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn btn-warning" onclick="openAutoGradeSetting()" id="autoGradeBtn">⚙️ 客观题自动阅卷: 已开启</button>
+                <span style="flex:1;"></span>
+                <button class="btn btn-info" onclick="exportStats()">📊 统计所有学生得分</button>
+                <button class="btn btn-primary" onclick="downloadAllPapers()">📦 下载所有学生试卷</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>学号</th>
+                        <th>姓名</th>
+                        <th>状态</th>
+                        <th>总得分</th>
+                        <th>已批改</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="studentList"></tbody>
+            </table>
+        </div>
+
+        <!-- Grading layout: left questions + right scores -->
+        <div class="grading-layout" id="gradingLayout">
+            <div class="grading-left">
+                <div id="gradingQuestions"></div>
+            </div>
+            <div class="grading-right" id="gradingRight">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <h3 style="border:none;padding:0;margin:0;">📊 评分面板</h3>
+                    <button class="btn btn-primary" style="padding:5px 10px;font-size:0.82em;" onclick="downloadStudentPaper()">下载</button>
+                </div>
+                <div id="studentInfo" style="font-size:0.85em;color:#64748b;margin-bottom:10px;"></div>
+                <div class="score-summary">
+                    <div class="total" id="totalScoreDisplay">-- / --</div>
+                </div>
+                <div id="scoreItems"></div>
+                <div class="student-save-row">
+                    <button class="btn btn-success" onclick="saveStudentGrades()" style="flex:1;">💾 保存得分</button>
+                    <button class="btn btn-warning" onclick="backToCover()">← 返回列表</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-grade setting modal -->
+        <div class="modal-overlay" id="autoGradeModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(6px);z-index:1000;justify-content:center;align-items:center;">
+            <div class="modal-box" style="background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);border-radius:16px;padding:28px;max-width:380px;width:92%;border:1px solid rgba(255,255,255,0.7);">
+                <h2 style="margin-bottom:16px;color:#1e293b;font-size:1.1em;">⚙️ 客观题自动阅卷</h2>
+                <p style="color:#64748b;font-size:0.9em;margin-bottom:16px;">开启后，选择题/判断题自动评分，教师可手动修改。</p>
+                <div class="checkbox-group" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                    <input type="checkbox" id="autoGradeCheck" style="width:16px;height:16px;accent-color:#4A90D9;">
+                    <label for="autoGradeCheck" style="font-size:0.95em;cursor:pointer;">开启客观题自动阅卷</label>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button class="btn" style="background:#e9ecef;" onclick="closeAutoGradeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveAutoGradeSetting()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = 'http://localhost:5000/api';
+        const EXAM_ID = new URLSearchParams(window.location.search).get('exam_id');
+        let examData = null;  // full grading data {exam, sessions[]}
+        let currentStudent = null;  // {session_id, student_id, student_name, ...}
+        let autoGrade = true;  // default
+
+        async function checkLogin() {
+            try {
+                const res = await fetch(`${API}/teacher/check`);
+                const data = await res.json();
+                if (!data.logged_in) window.location.href = 'login.html';
+            } catch (e) { window.location.href = 'login.html'; }
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast-${type} show`;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        async function loadData() {
+            try {
+                const res = await fetch(`${API}/teacher/exam/${EXAM_ID}/grading-sessions`);
+                examData = await res.json();
+
+                // Get exam title
+                document.getElementById('examTitle').textContent = examData.exam ? examData.exam.title : '';
+                document.getElementById('studentCount').textContent = `共 ${examData.sessions.length} 名学生`;
+
+                // Get auto_grade setting
+                try {
+                    const ag = await fetch(`${API}/teacher/exam/${EXAM_ID}/auto-grade`);
+                    const agData = await ag.json();
+                    autoGrade = agData.auto_grade;
+                } catch(e) {}
+                updateAutoGradeButton();
+
+                // Check auto_grade from submissions themselves
+                // If auto_grade is on, we auto-grade objective questions that are not yet graded
+                if (autoGrade) {
+                    await autoGradeObjectiveQuestions();
+                }
+
+                renderStudentList();
+                backToCover();
+            } catch (e) {
+                showToast('加载失败', 'error');
+            }
+        }
+
+        function updateAutoGradeButton() {
+            const btn = document.getElementById('autoGradeBtn');
+            btn.textContent = autoGrade ? '⚙️ 客观题自动阅卷: ✅ 已开启' : '⚙️ 客观题自动阅卷: ❌ 已关闭';
+        }
+
+        function openAutoGradeSetting() {
+            document.getElementById('autoGradeCheck').checked = autoGrade;
+            document.getElementById('autoGradeModal').style.display = 'flex';
+        }
+
+        function closeAutoGradeModal() {
+            document.getElementById('autoGradeModal').style.display = 'none';
+        }
+
+        async function saveAutoGradeSetting() {
+            const val = document.getElementById('autoGradeCheck').checked ? 1 : 0;
+            try {
+                await fetch(`${API}/teacher/exam/${EXAM_ID}/auto-grade`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ auto_grade: val })
+                });
+                autoGrade = !!val;
+                updateAutoGradeButton();
+                closeAutoGradeModal();
+                showToast('自动阅卷设置已更新');
+            } catch (e) {
+                showToast('保存失败', 'error');
+            }
+        }
+
+        async function autoGradeObjectiveQuestions() {
+            // For each session, update objective question scores
+            for (const s of examData.sessions) {
+                for (const q of s.questions) {
+                    const isObjective = ['单选题', '选择题', '判断题'].includes(q.q_type);
+                    if (!isObjective) continue;
+                    if (q.actual_score != null && q.actual_score > 0) continue;  // already graded
+
+                    // Auto-grade
+                    const ans = (q.answer_text || '').trim().toUpperCase();
+                    const correct = (q.correct_answer || '').trim().toUpperCase();
+                    let score = 0;
+                    if (q.q_type === '多选题') {
+                        const ansSet = new Set(ans.split('').filter(c => c >= 'A' && c <= 'D'));
+                        const correctSet = new Set(correct.split('').filter(c => c >= 'A' && c <= 'D'));
+                        if (ansSet.size === correctSet.size && [...ansSet].every(c => correctSet.has(c))) {
+                            score = q.score;
+                        }
+                    } else {
+                        if (ans === correct) score = q.score;
+                    }
+                    q.actual_score = score;
+                }
+            }
+        }
+
+        function renderStudentList() {
+            const tbody = document.getElementById('studentList');
+            tbody.innerHTML = examData.sessions.map(s => {
+                const gradedTotal = s.questions.reduce((sum, q) => sum + (q.actual_score || 0), 0);
+                const status = s.status === 'submitted' ? '<span class="badge badge-done">已交卷</span>' : '<span class="badge badge-progress">考试中</span>';
+                const graded = s.questions.some(q => q.actual_score != null && q.actual_score > 0) ? '<span class="badge badge-done">✅ 已批改</span>' : '<span class="badge badge-progress">待批改</span>';
+                return `<tr onclick="openStudent(${s.session_id})">
+                    <td style="font-weight:600;color:#4A90D9;">${s.student_id}</td>
+                    <td>${s.student_name}</td>
+                    <td>${status}</td>
+                    <td style="font-weight:600;">${gradedTotal}</td>
+                    <td>${graded}</td>
+                    <td><button class="btn btn-primary" style="padding:5px 10px;font-size:0.82em;" onclick="event.stopPropagation();openStudent(${s.session_id})">阅卷</button></td>
+                </tr>`;
+            }).join('');
+            if (!examData.sessions.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">暂无学生提交试卷</td></tr>';
+            }
+        }
+
+        function openStudent(sessionId) {
+            const session = examData.sessions.find(s => s.session_id === sessionId);
+            if (!session) { showToast('未找到该学生', 'error'); return; }
+            currentStudent = session;
+
+            // Show grading layout, hide cover
+            document.getElementById('coverPage').classList.add('hidden');
+            document.getElementById('gradingLayout').classList.add('show');
+
+            // Student info
+            document.getElementById('studentInfo').textContent = `${session.student_name} (${session.student_id})`;
+
+            // Render questions
+            renderQuestions(session);
+            renderScoreItems(session);
+            updateTotalScore(session);
+        }
+
+        function renderQuestions(session) {
+            const container = document.getElementById('gradingQuestions');
+            container.innerHTML = session.questions.map((q, i) => {
+                const isObjective = ['单选题', '选择题', '判断题'].includes(q.q_type);
+                const statusClass = q.actual_score > 0 ? 'correct' : (q.is_correct === 0 ? 'wrong' : 'pending');
+                const statusText = q.actual_score > 0 ? '✅ 正确' : (q.is_correct === 0 ? '❌ 错误' : '⏳ 待批改');
+
+                let html = `<div class="q-block">
+                    <h4>第 ${i + 1} 题 <span class="q-type-label">【${q.q_type}】 (${q.score} 分)</span></h4>
+                    <div class="q-content">${q.content}</div>`;
+
+                if (q.option_a) {
+                    html += `<div class="q-meta">A: ${q.option_a} &nbsp; B: ${q.option_b} &nbsp; C: ${q.option_c} &nbsp; D: ${q.option_d}</div>`;
+                }
+
+                html += `<div class="q-meta">正确答案: <b class="correct">${q.correct_answer || '无'}</b></div>`;
+                html += `<div class="q-meta">学生答案: <b class="${statusClass}">${q.answer_text || '(未作答)'}</b> &nbsp; ${isObjective ? statusText : '⏳ 主观题(需手动评分)'}</div>`;
+
+                // For non-objective questions, show input inline
+                if (!isObjective) {
+                    html += `<div class="q-meta" style="margin-top:6px;">
+                        得分: <input type="number" class="score-input-${q.q_id}" value="${q.actual_score || 0}" min="0" max="${q.score}" step="0.5" style="width:60px;padding:3px 6px;border:1.5px solid #e2e8f0;border-radius:6px;" onchange="updateScore(${q.q_id}, this.value)">
+                        / ${q.score} 分
+                    </div>`;
+                }
+
+                html += '</div>';
+                return html;
+            }).join('');
+        }
+
+        function renderScoreItems(session) {
+            const container = document.getElementById('scoreItems');
+            let total = 0;
+            let maxTotal = 0;
+
+            container.innerHTML = session.questions.map((q, i) => {
+                const isObjective = ['单选题', '选择题', '判断题'].includes(q.q_type);
+                const score = q.actual_score || 0;
+                total += score;
+                maxTotal += q.score;
+
+                if (isObjective) {
+                    // Read-only display for objective (auto-graded)
+                    return `<div class="score-item">
+                        <span class="q-label">第${i + 1}题</span>
+                        <span class="q-score" style="color:${score > 0 ? '#52c41a' : '#94a3b8'};">${score} <span class="q-max">/ ${q.score}</span></span>
+                    </div>`;
+                } else {
+                    // Editable for subjective
+                    return `<div class="score-item">
+                        <span class="q-label">第${i + 1}题</span>
+                        <span class="q-score">
+                            <input type="number" id="right_score_${q.q_id}" value="${q.actual_score || 0}" min="0" max="${q.score}" step="0.5" onchange="updateScore(${q.q_id}, this.value)"><span class="q-max">/${q.score}</span>
+                        </span>
+                    </div>`;
+                }
+            }).join('');
+
+            document.getElementById('totalScoreDisplay').textContent = `${total} / ${maxTotal}`;
+        }
+
+        function updateScore(qId, value) {
+            if (!currentStudent) return;
+            const q = currentStudent.questions.find(q => q.q_id === qId);
+            if (q) {
+                q.actual_score = parseFloat(value) || 0;
+                renderScoreItems(currentStudent);
+                updateTotalScore(currentStudent);
+            }
+        }
+
+        function updateTotalScore(session) {
+            const total = session.questions.reduce((sum, q) => sum + (q.actual_score || 0), 0);
+            const maxTotal = session.questions.reduce((sum, q) => sum + (q.score || 0), 0);
+            document.getElementById('totalScoreDisplay').textContent = `${total} / ${maxTotal}`;
+        }
+
+        async function saveStudentGrades() {
+            if (!currentStudent) return;
+
+            const grades = {};
+            currentStudent.questions.forEach(q => {
+                const val = q.actual_score;
+                if (val != null) grades[q.q_id] = val;
+            });
+
+            try {
+                const res = await fetch(`${API}/teacher/session/${currentStudent.session_id}/grade`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ grades })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`评分已保存，总分: ${data.total_score}`);
+                    // Update the session total_score in data
+                    currentStudent.total_score = data.total_score;
+                    renderStudentList();
+                } else {
+                    showToast('保存失败', 'error');
+                }
+            } catch (e) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        async function downloadStudentPaper() {
+            if (!currentStudent) return;
+            window.open(`${API}/teacher/session/${currentStudent.session_id}/download/xlsx`, '_blank');
+        }
+
+        function backToCover() {
+            currentStudent = null;
+            document.getElementById('coverPage').classList.remove('hidden');
+            document.getElementById('gradingLayout').classList.remove('show');
+        }
+
+        function exportStats() {
+            window.open(`${API}/teacher/exam/${EXAM_ID}/stats/xlsx`, '_blank');
+        }
+
+        async function downloadAllPapers() {
+            try {
+                const res = await fetch(`${API}/teacher/exam/${EXAM_ID}/download-all`);
+                if (!res.ok) {
+                    const err = await res.json();
+                    showToast(err.error || '下载失败', 'error');
+                    return;
+                }
+                // Trigger download
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `试卷_${EXAM_ID}_所有学生试卷.zip`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('下载已开始');
+            } catch (e) {
+                showToast('下载失败', 'error');
+            }
+        }
+
+        checkLogin();
+        loadData();
+    </script>
+</body>
+</html>

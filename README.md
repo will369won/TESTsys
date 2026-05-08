@@ -14,7 +14,7 @@
 
 - 如果考试注重学生的prompt能力，而不是撰写代码的能力：能够调用在AI网站，考生能够通过与AI交互实现答题。
 
-- 浏览器访问 http://www.TESTsys.xys
+- 浏览器访问 http://118.178.26.156
 
 ## 使用流程
 - 教师登录 → 下载模板 → 上传试卷模板 → 上传学生信息 → 考试设置
@@ -35,7 +35,7 @@ Tech Stack: Python Flask + SQLite + openpyxl + HTML/CSS/JS
 2. Run `pip install -r requirements.txt` from `backend/`
 3. Configure Nginx (see `nginx-testsys-server.conf`)
 4. Run `start.bat` to start backend
-5. Open http://www.TESTsys.xys in browser
+5. Open http://118.178.26.156 in browser
 
 ### Teacher Accounts
 - Built-in teacher: ID=001, password=123

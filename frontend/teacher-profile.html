@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息 - AI智能考试系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e8ecf1 100%);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #4A90D9 0%, #357ABD 100%);
+            color: white;
+            padding: 16px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { font-size: 1.3em; font-weight: 600; letter-spacing: -0.2px; }
+        .header button {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.35);
+            color: white;
+            padding: 7px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.88em;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .header button:hover { background: rgba(255,255,255,0.28); transform: translateY(-1px); }
+
+        /* Container */
+        .container { max-width: 600px; margin: 24px auto; padding: 0 18px; }
+
+        /* Card */
+        .card {
+            background: rgba(255,255,255,0.80);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 12px rgba(74,144,217,0.06), 0 1px 3px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.7);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card:hover { box-shadow: 0 4px 20px rgba(74,144,217,0.10); transform: translateY(-1px); }
+        .card h2 {
+            color: #1e293b;
+            margin-bottom: 16px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-bottom: 1.5px solid rgba(74,144,217,0.12);
+            padding-bottom: 10px;
+        }
+
+        /* Form */
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #475569;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95em;
+            transition: all 0.25s;
+            background: white;
+            color: #1e293b;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #4A90D9;
+            box-shadow: 0 0 0 3px rgba(74,144,217,0.12);
+        }
+        .form-group input:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 9px 22px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.92em;
+            font-weight: 500;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-primary { background: linear-gradient(135deg, #4A90D9, #357ABD); color: white; }
+        .btn-success { background: linear-gradient(135deg, #52c41a, #389e0d); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #ff4d4f, #cf1322); color: white; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(74,144,217,0.20); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+        .btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+        /* Toast */
+        .toast {
+            position: fixed; top: 20px; right: 20px;
+            padding: 14px 24px; border-radius: 12px; color: white;
+            font-size: 0.95em; z-index: 9999;
+            opacity: 0; transition: opacity 0.3s, transform 0.3s;
+            transform: translateY(-8px);
+            backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast-success { background: rgba(82,196,26,0.9); }
+        .toast-error { background: rgba(255,77,79,0.9); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>👤 个人信息管理</h1>
+        <button onclick="window.location.href='teacher.html'">← 返回教师管理</button>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>个人资料</h2>
+            <div class="form-group">
+                <label>教师ID</label>
+                <input type="text" id="teacherIdField" disabled>
+            </div>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="usernameField" placeholder="输入新的用户名">
+            </div>
+            <div class="form-group">
+                <label>学校</label>
+                <input type="text" id="schoolField" placeholder="输入学校名称">
+            </div>
+            <div class="form-group">
+                <label>新密码（留空则不修改）</label>
+                <input type="password" id="passwordField" placeholder="输入新密码">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-warning" onclick="window.location.href='teacher.html'">取消</button>
+                <button class="btn btn-success" id="saveBtn" onclick="saveProfile()">确认修改</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = '/api';
+
+        async function checkLogin() {
+            try {
+                const res = await fetch(`${API}/teacher/check`);
+                const data = await res.json();
+                if (!data.logged_in) window.location.href = 'login.html';
+            } catch (e) { window.location.href = 'login.html'; }
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast-${type} show`;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        async function loadProfile() {
+            try {
+                const res = await fetch(`${API}/teacher/profile`);
+                const data = await res.json();
+                if (data.ok) {
+                    document.getElementById('teacherIdField').value = data.teacher_id || '';
+                    document.getElementById('usernameField').value = data.username || '';
+                    document.getElementById('schoolField').value = data.school || '';
+                } else {
+                    showToast(data.error || '加载失败', 'error');
+                }
+            } catch (e) {
+                showToast('加载失败', 'error');
+            }
+        }
+
+        async function saveProfile() {
+            const username = document.getElementById('usernameField').value.trim();
+            const school = document.getElementById('schoolField').value.trim();
+            const newPassword = document.getElementById('passwordField').value;
+
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = '保存中...';
+
+            try {
+                const res = await fetch(`${API}/teacher/profile`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        school: school,
+                        new_password: newPassword
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('个人信息已更新');
+                    // Reload profile to show updated values
+                    setTimeout(() => loadProfile(), 1000);
+                } else {
+                    showToast(data.error || '保存失败', 'error');
+                }
+            } catch (e) {
+                showToast('网络错误', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '确认修改';
+            }
+        }
+
+        checkLogin();
+        loadProfile();
+    </script>
+</body>
+</html>

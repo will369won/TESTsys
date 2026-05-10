@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>样卷预览 - AI智能考试系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', -apple-system, sans-serif; background: linear-gradient(135deg, #f0f4f8 0%, #e8ecf1 100%); min-height: 100vh; }
+        .header {
+            background: linear-gradient(135deg, #4A90D9 0%, #357ABD 100%);
+            color: white; padding: 12px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header h1 { font-size: 1.2em; font-weight: 600; }
+        .header .info { font-size: 0.88em; opacity: 0.85; }
+
+        .main { display: flex; gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .question-area { flex: 1; background: rgba(255,255,255,0.82); backdrop-filter: blur(16px); border-radius: 16px; padding: 30px; box-shadow: 0 2px 12px rgba(74,144,217,0.06); border: 1px solid rgba(255,255,255,0.7); display: flex; flex-direction: column; }
+        .question-header { margin-bottom: 24px; }
+        .q-num { font-size: 0.88em; color: #64748b; margin-bottom: 4px; }
+        .q-type { display: inline-block; padding: 3px 10px; background: rgba(74,144,217,0.1); border-radius: 6px; font-size: 0.8em; color: #4A90D9; font-weight: 500; }
+        .q-score { float: right; color: #4A90D9; font-weight: 600; }
+        .question-content { font-size: 1.05em; line-height: 1.8; margin-bottom: 24px; color: #1e293b; }
+        .question-content img { max-width: 100%; border-radius: 8px; margin-top: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .option { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: rgba(255,255,255,0.5); }
+        .option .letter { font-weight: 600; color: #4A90D9; min-width: 24px; }
+        .option .text { color: #334155; font-size: 0.98em; line-height: 1.6; }
+        .option .text img { max-width: 200px; max-height: 200px; border-radius: 6px; display: block; margin-top: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .option .text code { font-size: 0.88em; color: #475569; }
+
+        .sidebar { width: 200px; background: rgba(255,255,255,0.82); backdrop-filter: blur(16px); border-radius: 16px; padding: 20px; box-shadow: 0 2px 12px rgba(74,144,217,0.06); border: 1px solid rgba(255,255,255,0.7); align-self: flex-start; position: sticky; top: 80px; }
+        .sidebar h3 { font-size: 0.92em; color: #1e293b; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(226,232,240,0.6); }
+        .q-nav-type { font-size: 0.8em; color: #94a3b8; margin: 8px 0 4px; font-weight: 500; }
+        .q-nav-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .q-nav-btn { width: 36px; height: 36px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; font-size: 0.82em; font-weight: 500; transition: all 0.2s; background: white; color: #475569; }
+        .q-nav-btn.current { background: #4A90D9; color: white; border-color: #4A90D9; }
+        .q-nav-btn:hover { transform: scale(1.08); }
+
+        .back-btn {
+            width: 100%; padding: 10px; margin-top: 16px;
+            border: 1px solid #e2e8f0; border-radius: 8px;
+            background: white; cursor: pointer;
+            font-size: 0.88em; color: #475569; transition: all 0.2s;
+        }
+        .back-btn:hover { background: rgba(74,144,217,0.06); border-color: #4A90D9; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+        @media (max-width: 640px) { .main { flex-direction: column; } .sidebar { width: 100%; position: static; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 样卷预览</h1>
+        <div class="info" id="examTitle">加载中...</div>
+    </div>
+
+    <div class="main">
+        <div class="question-area" id="questionArea">
+            <div id="questionContent"></div>
+            <div id="navButtons" style="margin-top:24px;display:flex;justify-content:space-between;">
+                <button class="back-btn" onclick="prevQuestion()" disabled>上一题</button>
+                <button class="back-btn" style="width:auto;background:rgba(74,144,217,0.08);border-color:#4A90D9;color:#4A90D9;" onclick="window.close()">关闭预览</button>
+                <button class="back-btn" onclick="nextQuestion()">下一题</button>
+            </div>
+        </div>
+        <div class="sidebar" id="sidebar">
+            <h3>题目导航</h3>
+            <div id="questionNav"></div>
+            <button class="back-btn" onclick="window.location.href='teacher.html'">← 返回教师管理</button>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api';
+        const params = new URLSearchParams(window.location.search);
+        const examId = params.get('exam_id');
+
+        let questions = [];
+        let currentIdx = 0;
+        let attachments = [];
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+
+        function isImageFile(name) {
+            if (!name) return false;
+            const ext = name.split('.').pop().toLowerCase();
+            return ['png','jpg','jpeg','gif','bmp','webp','svg'].includes(ext);
+        }
+
+        function renderContentWithImages(content, remark) {
+            let html = escapeHtml(content);
+            if (remark) {
+                const files = remark.split(';').map(f => f.trim()).filter(Boolean);
+                files.forEach(f => {
+                    if (isImageFile(f)) {
+                        html += `<div style="margin-top:12px;"><img src="${API}/exam/${examId}/attachments/file/${encodeURIComponent(f)}" alt="${escapeHtml(f)}" style="max-width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06);" onerror="this.style.display='none'"></div>`;
+                    }
+                });
+            }
+            return html;
+        }
+
+        function renderOptionWithImage(text) {
+            if (!text) return '';
+            if (isImageFile(text.trim())) {
+                return `<img src="${API}/exam/${examId}/attachments/file/${encodeURIComponent(text.trim())}" alt="${escapeHtml(text.trim())}" style="max-width:160px;max-height:160px;border-radius:6px;display:block;" onerror="this.style.display='none'"><code style="font-size:0.82em;color:#94a3b8;margin-top:4px;">${escapeHtml(text)}</code>`;
+            }
+            return escapeHtml(text);
+        }
+
+        function renderQuestion() {
+            const q = questions[currentIdx];
+            if (!q) return;
+
+            const area = document.getElementById('questionContent');
+            // Compute type-local question number
+            const qType = q.q_type;
+            let typeLocalNum = 1;
+            let typeTotal = 0;
+            for (let i = 0; i < questions.length; i++) {
+                if (questions[i].q_type === qType) {
+                    typeTotal++;
+                    if (i < currentIdx) typeLocalNum++;
+                }
+            }
+            const header = `<div class="question-header">
+                <div class="q-num">${qType} 第${typeLocalNum}题 / 共${typeTotal}题（本类）</div>
+                <span class="q-type">${escapeHtml(q.q_type)}</span>
+                <span class="q-score">${q.score} 分</span>
+            </div>`;
+
+            // v4.2: Show data file badges in preview
+            let dataFileHtml = '';
+            if (q.data_file) {
+                const files = q.data_file.split(';').map(f => f.trim()).filter(Boolean);
+                if (files.length > 0) {
+                    dataFileHtml = `<div style="margin:8px 0 12px;padding:8px 12px;background:rgba(225,245,254,0.6);border-radius:8px;border:1px solid rgba(144,202,249,0.3);font-size:0.85em;">📊 数据文件: ${files.map(f => `<code style="background:rgba(26,115,232,0.08);padding:2px 6px;border-radius:4px;margin:0 2px;">${escapeHtml(f)}</code>`).join(', ')}</div>`;
+                }
+            }
+
+            const content = `<div class="question-content">${renderContentWithImages(q.content, q.remark)}${dataFileHtml}</div>`;
+
+            let optionsHtml = '';
+            const optionLabels = ['A', 'B', 'C', 'D'];
+            const optionFields = [q.option_a, q.option_b, q.option_c, q.option_d];
+            if (['单选题', '多选题', '判断题'].includes(q.q_type)) {
+                optionsHtml = '<div class="options">';
+                optionFields.forEach((opt, i) => {
+                    if (!opt && i < 2 && q.q_type === '判断题') return;
+                    if (!opt) return;
+                    optionsHtml += `<div class="option">
+                        <span class="letter">${optionLabels[i]}.</span>
+                        <div class="text">${renderOptionWithImage(opt)}</div>
+                    </div>`;
+                });
+                optionsHtml += '</div>';
+            } else {
+                optionsHtml = '<div style="padding:16px;background:rgba(248,250,252,0.6);border-radius:10px;color:#94a3b8;">(此题为简答/综合题，学生在此作答)</div>';
+            }
+
+            area.innerHTML = header + content + optionsHtml;
+
+            // Update nav highlights
+            document.querySelectorAll('.q-nav-btn').forEach((btn, i) => {
+                btn.classList.toggle('current', i === currentIdx);
+            });
+            document.getElementById('navButtons').children[0].disabled = currentIdx === 0;
+            document.getElementById('navButtons').children[2].disabled = currentIdx === questions.length - 1;
+        }
+
+        function prevQuestion() {
+            if (currentIdx > 0) { currentIdx--; renderQuestion(); }
+        }
+
+        function nextQuestion() {
+            if (currentIdx < questions.length - 1) { currentIdx++; renderQuestion(); }
+        }
+
+        async function loadPreview() {
+            try {
+                const res = await fetch(`${API}/exam/${examId}/preview`);
+                const data = await res.json();
+                if (!data.questions || data.questions.length === 0) {
+                    document.getElementById('questionContent').innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">暂无题目数据</div>';
+                    return;
+                }
+
+                questions = data.questions;
+                document.getElementById('examTitle').textContent = (data.exam && data.exam.title) || '样卷';
+
+                // Build nav
+                const qNav = document.getElementById('questionNav');
+                const types = {};
+                let globalIdx = 0;
+                questions.forEach((q, i) => {
+                    if (!types[q.q_type]) types[q.q_type] = [];
+                    types[q.q_type].push({ global: i, local: types[q.q_type].length + 1 });
+                });
+                Object.keys(types).forEach(type => {
+                    qNav.innerHTML += `<div class="q-nav-type">${type}</div><div class="q-nav-group">`;
+                    types[type].forEach(item => {
+                        qNav.innerHTML += `<button class="q-nav-btn" onclick="currentIdx=${item.global};renderQuestion()">${item.local}</button>`;
+                    });
+                    qNav.innerHTML += `</div>`;
+                });
+
+                renderQuestion();
+            } catch (e) {
+                document.getElementById('questionContent').innerHTML = '<div style="text-align:center;padding:40px;color:#ff4d4f;">加载失败：' + e.message + '</div>';
+            }
+        }
+
+        loadPreview();
+    </script>
+</body>
+</html>

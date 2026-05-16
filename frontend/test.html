@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教师管理 - AI智能考试系统</title>
+    <style>
+        :root {
+            --bg-root: #faf9f7;
+            --bg-card: #ffffff;
+            --bg-hover: #f5f3f0;
+            --bg-input: #ffffff;
+            --border-default: #e8e5e0;
+            --border-hover: #d4cfc8;
+            --text-primary: #1a1816;
+            --text-secondary: #6b6560;
+            --text-tertiary: #9e9892;
+            --accent: #1a1816;
+            --accent-dim: rgba(26,24,22,0.06);
+            --success: #4a8c5c;
+            --success-dim: rgba(74,140,92,0.08);
+            --warning: #c4904a;
+            --warning-dim: rgba(196,144,74,0.08);
+            --error: #c45a5a;
+            --error-dim: rgba(196,90,90,0.08);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-root);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-default);
+            color: var(--text-primary);
+            padding: 16px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { font-size: 1.2em; font-weight: 600; letter-spacing: -0.2px; }
+        .header .user-info { font-size: 0.88em; color: var(--text-secondary); margin-right: 14px; }
+        .header-right { display: flex; align-items: center; gap: 8px; }
+        .header button {
+            background: var(--bg-card);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
+            padding: 7px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.88em;
+            transition: all 0.15s;
+        }
+        .header button:hover { border-color: var(--border-hover); color: var(--text-primary); }
+
+        .container { max-width: 1160px; margin: 24px auto; padding: 0 18px; }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            margin-bottom: 18px;
+            border: 1px solid var(--border-default);
+        }
+        .card h2 {
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-default);
+            padding-bottom: 10px;
+        }
+
+        .profile-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 18px;
+            background: var(--bg-hover);
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+            border: 1px solid var(--border-default);
+        }
+        .profile-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-sm);
+            background: var(--accent-dim);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            font-weight: 700;
+        }
+        .profile-info { flex: 1; }
+        .profile-info .name { font-weight: 600; color: var(--text-primary); }
+        .profile-info .school { font-size: 0.85em; color: var(--text-secondary); }
+        .exam-count-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .exam-count-badge.ok { background: var(--success-dim); color: var(--success); }
+        .exam-count-badge.full { background: var(--error-dim); color: var(--error); }
+
+        .btn {
+            padding: 9px 18px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.88em;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .btn-primary { background: var(--accent-dim); color: var(--text-primary); border: 1px solid var(--border-default); }
+        .btn-success { background: var(--success-dim); color: var(--success); border: 1px solid var(--border-default); }
+        .btn-info { background: var(--accent-dim); color: var(--text-primary); border: 1px solid var(--border-default); }
+        .btn-settings { background: var(--warning); color: #fff; border: 1px solid var(--border-default); }
+        .btn-danger { background: var(--error-dim); color: var(--error); border: 1px solid var(--border-default); }
+        .btn:hover:not(:disabled) { opacity: 0.85; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+
+        .file-upload { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .file-upload label { font-size: 0.88em; color: var(--text-secondary); font-weight: 500; }
+        .file-upload input[type="file"] {
+            padding: 7px 10px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            font-size: 0.88em;
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+        .file-upload input[type="file"]::file-selector-button {
+            padding: 4px 12px;
+            border: none;
+            border-radius: 4px;
+            background: var(--accent-dim);
+            color: var(--text-primary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .file-upload input[type="file"]::file-selector-button:hover {
+            background: var(--bg-hover);
+        }
+
+        .upload-warning {
+            background: var(--warning-dim);
+            border: 1px solid var(--warning-dim);
+            color: var(--warning);
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            margin-top: 12px;
+            font-size: 0.88em;
+            display: none;
+        }
+        .upload-warning.show { display: block; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border-subtle); }
+        td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        td:first-child { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        th { background: var(--bg-hover); font-weight: 600; color: var(--text-secondary); font-size: 0.84em; }
+        td { font-size: 0.88em; color: var(--text-primary); }
+        tr:hover td { background: var(--bg-hover); }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.78em; font-weight: 500; }
+        .badge-progress { background: var(--warning-dim); color: var(--warning); }
+        .badge-done { background: var(--success-dim); color: var(--success); }
+        .badge-pending { background: var(--error-dim); color: var(--error); }
+
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 24px; border-radius: var(--radius-sm); color: white; font-size: 0.95em; z-index: 9999; opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(-8px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast-success { background: var(--success); }
+        .toast-error { background: var(--error); }
+
+        .detail-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 1000; justify-content: center; align-items: center; }
+        .detail-modal.show { display: flex; }
+        .detail-content { background: var(--bg-card); border-radius: var(--radius-md); padding: 28px; max-width: 900px; width: 92%; max-height: 80vh; overflow-y: auto; border: 1px solid var(--border-default); }
+        .detail-content h2 { margin-bottom: 18px; color: var(--text-primary); }
+        .q-item { background: var(--bg-hover); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; border: 1px solid var(--border-default); }
+        .q-item h4 { color: var(--text-primary); margin-bottom: 6px; }
+        .q-item .meta { font-size: 0.84em; color: var(--text-secondary); margin-bottom: 6px; }
+        .q-item .answer-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+        .q-item input[type="number"] { width: 75px; padding: 6px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); font-size: 0.9em; background: var(--bg-input); color: var(--text-primary); }
+        .q-item input[type="number"]:focus { outline: none; border-color: var(--accent); }
+        .q-item .correct { color: var(--success); font-weight: 500; }
+        .q-item .wrong { color: var(--error); font-weight: 500; }
+        .close-btn { float: right; background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--text-tertiary); transition: color 0.15s; }
+        .close-btn:hover { color: var(--text-primary); }
+        .score-input { display: flex; align-items: center; gap: 6px; }
+
+        /* Roster Modal */
+        .roster-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 1000; justify-content: center; align-items: center; }
+        .roster-modal.show { display: flex; }
+        .roster-content { background: var(--bg-card); border-radius: var(--radius-md); max-width: 900px; width: 92%; max-height: 85vh; display: flex; flex-direction: column; border: 1px solid var(--border-default); }
+        .roster-header { display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--border-default); }
+        .roster-header h2 { font-size: 1.05em; font-weight: 600; color: var(--text-primary); }
+        .roster-body { display: flex; flex: 1; min-height: 0; padding: 16px 24px; gap: 12px; overflow: hidden; }
+        .roster-panel { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .roster-panel-title { font-size: 0.9em; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .roster-list { flex: 1; overflow-y: auto; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--bg-root); min-height: 300px; }
+        .roster-list .roster-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border-default); cursor: pointer; transition: background 0.1s; font-size: 0.85em; color: var(--text-primary); }
+        .roster-list .roster-item:hover { background: var(--bg-hover); }
+        .roster-list .roster-item.selected { background: var(--accent-dim); }
+        .roster-list .roster-item input[type="checkbox"] { accent-color: var(--accent); }
+        .roster-list .roster-item .sid { font-weight: 500; min-width: 80px; }
+        .roster-list .roster-item .name { color: var(--text-secondary); }
+        .roster-list .roster-item .extra { font-size: 0.8em; color: var(--text-tertiary); margin-left: auto; }
+        .roster-divider { display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 0 4px; }
+        .roster-pagination { display: flex; justify-content: center; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
+        .roster-pagination button { padding: 4px 10px; border: 1px solid var(--border-default); border-radius: 4px; background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: 0.8em; transition: all 0.1s; }
+        .roster-pagination button:hover { background: var(--bg-hover); }
+        .roster-pagination button.active { background: var(--accent); color: var(--bg-card); border-color: var(--accent); }
+        .roster-pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+        .roster-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 24px; border-top: 1px solid var(--border-default); }
+        @media (max-width: 640px) {
+            .roster-body { flex-direction: column; }
+            .roster-divider { flex-direction: row; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header { padding: 14px 18px; }
+            .container { padding: 0 10px; }
+            .btn-group { flex-direction: column; }
+            .file-upload { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>教师管理系统</h1>
+        <div class="header-right">
+            <span class="user-info" id="userInfo"></span>
+            <button onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Profile -->
+        <div class="card" id="profileCard">
+            <div class="profile-bar" style="cursor:pointer;" onclick="window.location.href='teacher-profile.html'" title="点击管理个人信息">
+                <div class="profile-avatar" id="profileAvatar">教</div>
+                <div class="profile-info">
+                    <div class="name" id="profileName">加载中...</div>
+                    <div class="school" id="profileSchool"></div>
+                </div>
+                <div class="exam-count-badge" id="examCountBadge">-- / 2 份试卷</div>
+            </div>
+        </div>
+
+        <!-- Template Management -->
+        <div class="card">
+            <h2>模板管理</h2>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="downloadExamTemplate()">下载题目模板</button>
+                <button class="btn btn-info" onclick="downloadStudentTemplate()">下载学生信息模板</button>
+            </div>
+            <div class="file-upload" style="margin-top: 12px;">
+                <label>上传题目模板：</label>
+                <input type="file" id="examFile" accept=".xlsx" onchange="onExamFileSelected()">
+                <button class="btn btn-success" id="uploadExamBtn" onclick="uploadExamTemplate()" disabled>上传并生成试卷</button>
+                <div id="prescanMessage" style="margin-top:6px;font-size:0.88em;color:var(--text-tertiary);"></div>
+            </div>
+            <div class="upload-warning" id="uploadWarning">
+                每个用户最多上传 <strong>2 份</strong>试卷。如需上传新试卷，请先删除旧试卷。
+            </div>
+
+            <div class="file-upload" style="margin-top: 12px;">
+                <label>上传学生信息：</label>
+                <input type="file" id="studentFile" accept=".xlsx">
+                <button class="btn btn-success" onclick="uploadStudentTemplate()">上传学生信息</button>
+            </div>
+            <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-default);">
+                <button class="btn btn-primary" onclick="window.location.href='students.html'">管理学生信息</button>
+            </div>
+        </div>
+
+        <!-- Teacher Personal Attachment Management (always visible) -->
+        <div class="card" id="teacherAttachmentCard">
+            <h2>附件管理</h2>
+            <div class="file-upload">
+                <label>上传附件到个人存储：</label>
+                <input type="file" id="teacherAttachmentUpload" multiple accept="image/*,.pdf,.doc,.docx,.txt">
+                <button class="btn btn-info" onclick="uploadTeacherAttachments()">上传附件</button>
+                <div style="margin-top:4px;font-size:0.8em;color:var(--text-tertiary);">文件将保存到您的个人附件存储，上传试卷模板时自动关联到试卷。</div>
+                <div id="prescanImageList" style="margin-top:6px;font-size:0.85em;color:var(--text-secondary);"></div>
+            </div>
+            <div id="teacherAttachmentList" style="margin-top:12px;font-size:0.88em;color:var(--text-tertiary);">
+                暂无附件
+            </div>
+        </div>
+
+        <!-- Exam List -->
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:25%;white-space:nowrap;">试卷标题</th>
+                        <th style="width:10%;white-space:nowrap;">试卷编号</th>
+                        <th style="width:8%;white-space:nowrap;">题目数</th>
+                        <th style="width:18%;white-space:nowrap;">创建时间</th>
+                        <th style="width:10%;white-space:nowrap;">模板状态</th>
+                        <th style="width:10%;white-space:nowrap;">考试设置</th>
+                        <th style="width:19%;white-space:nowrap;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="examList"></tbody>
+            </table>
+        </div>
+
+
+    </div>
+
+    <!-- Detail Modal -->
+    <!-- Roster Modal -->
+    <div class="roster-modal" id="rosterModal">
+        <div class="roster-content">
+            <div class="roster-header">
+                <h2 id="rosterModalTitle">设置考生</h2>
+                <button class="close-btn" onclick="closeRosterModal()">&times;</button>
+            </div>
+            <div class="roster-body">
+                <div class="roster-panel left-panel">
+                    <div class="roster-panel-title">
+                        <span>学生列表</span>
+                        <span id="availableCount" style="font-size:0.82em;color:var(--text-tertiary);">共 0 人</span>
+                    </div>
+                    <div style="display:flex;gap:6px;margin-bottom:10px;">
+                        <input type="text" id="rosterSearch" placeholder="搜索学号/姓名/班级..." style="flex:1;padding:7px 10px;border:1px solid var(--border-default);border-radius:6px;font-size:0.85em;background:var(--bg-input);color:var(--text-primary);" oninput="rosterFilterStudents()">
+                        <select id="rosterPerPage" style="padding:7px 8px;border:1px solid var(--border-default);border-radius:6px;font-size:0.85em;background:var(--bg-input);color:var(--text-primary);" onchange="loadRosterAvailableStudents()">
+                            <option value="25">25条/页</option>
+                            <option value="50">50条/页</option>
+                        </select>
+                    </div>
+                    <div class="roster-list" id="rosterAvailableList">
+                        <div style="text-align:center;color:var(--text-tertiary);padding:40px 0;">加载中...</div>
+                    </div>
+                    <div class="roster-pagination" id="rosterPagination"></div>
+                </div>
+                <div class="roster-divider">
+                    <button class="btn btn-primary" onclick="rosterAddSelected()" style="padding:8px 14px;font-size:0.9em;">→</button>
+                    <button class="btn" onclick="rosterRemoveSelected()" style="padding:8px 14px;font-size:0.9em;border:1px solid var(--border-default);background:var(--bg-card);color:var(--text-secondary);">←</button>
+                </div>
+                <div class="roster-panel right-panel">
+                    <div class="roster-panel-title">
+                        <span>已选考生</span>
+                        <span id="selectedCount" style="font-size:0.82em;color:var(--text-tertiary);">已选 0 人</span>
+                    </div>
+                    <div class="roster-list" id="rosterSelectedList">
+                        <div style="text-align:center;color:var(--text-tertiary);padding:40px 0;">暂无已选考生</div>
+                    </div>
+                </div>
+            </div>
+            <div class="roster-footer">
+                <button class="btn" onclick="closeRosterModal()" style="padding:8px 20px;border:1px solid var(--border-default);background:var(--bg-card);color:var(--text-secondary);">取消</button>
+                <button class="btn btn-success" onclick="rosterSave()" style="padding:8px 24px;">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-modal" id="detailModal">
+        <div class="detail-content">
+            <button class="close-btn" onclick="closeDetail()">&times;</button>
+            <h2 id="detailTitle">考试详情</h2>
+            <div id="detailBody"></div>
+            <div style="margin-top: 16px; text-align: right;">
+                <button class="btn btn-success" onclick="saveGrades()">保存评分</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = '/api';
+        let currentSessionId = null;
+        let currentExamId = null;
+        let profileData = null;
+
+        async function checkLogin() {
+            try {
+                const res = await fetch(`${API}/teacher/check`);
+                const data = await res.json();
+                if (!data.logged_in) window.location.href = 'login.html';
+            } catch (e) { window.location.href = 'login.html'; }
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast-${type} show`;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // Load profile
+        async function loadProfile() {
+            try {
+                const res = await fetch(`${API}/teacher/profile`);
+                profileData = await res.json();
+
+                // Update profile display
+                const initial = profileData.username ? profileData.username.charAt(0) : '教';
+                document.getElementById('profileAvatar').textContent = initial;
+                document.getElementById('profileName').textContent = profileData.username || '教师';
+                document.getElementById('profileSchool').textContent = profileData.school || '';
+
+                // Exam count badge
+                const badge = document.getElementById('examCountBadge');
+                badge.textContent = `${profileData.exam_count} / ${profileData.max_exams} 份试卷`;
+                badge.className = `exam-count-badge ${profileData.exam_count >= profileData.max_exams ? 'full' : 'ok'}`;
+
+                // Show upload warning + delete section if exams exist
+                if (profileData.exam_count >= profileData.max_exams) {
+                    document.getElementById('uploadWarning').classList.add('show');
+                }
+
+            } catch (e) {}
+        }
+
+        function downloadExamTemplate() {
+            window.open(`${API}/template/exam/download`, '_blank');
+        }
+
+        function downloadStudentTemplate() {
+            window.open(`${API}/template/student/download`, '_blank');
+        }
+
+        let prescanData = null;
+
+        async function onExamFileSelected() {
+            const file = document.getElementById('examFile').files[0];
+            const btn = document.getElementById('uploadExamBtn');
+            const msgDiv = document.getElementById('prescanMessage');
+            const imageList = document.getElementById('prescanImageList');
+
+            if (!file) {
+                btn.disabled = true;
+                msgDiv.textContent = '';
+                imageList.textContent = '';
+                prescanData = null;
+                return;
+            }
+
+            // Prescan the file
+            const fd = new FormData();
+            fd.append('file', file);
+            try {
+                const res = await fetch(`${API}/template/prescan`, { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.ok) {
+                    prescanData = data;
+                    // Always load teacher attachments so user can see what's available
+                    loadTeacherAttachments();
+                    if (data.needs_attachment) {
+                        msgDiv.innerHTML = '<strong>该试卷需要附件</strong>，请先在个人附件存储中上传所需文件，上传模板时系统将自动关联。';
+                        btn.disabled = false;
+                        // Show required images
+                        if (data.referenced_images && data.referenced_images.length > 0) {
+                            imageList.innerHTML = '需要以下附件：<br>' +
+                                data.referenced_images.map(f => `<span style="display:inline-block;padding:2px 8px;margin:2px;background:var(--warning-dim);border-radius:4px;">${f}</span>`).join('');
+                        } else {
+                            imageList.textContent = '该试卷某些题目标记了需要附件，请上传对应文件。';
+                        }
+                    } else {
+                        msgDiv.innerHTML = '无需附件，可直接上传生成试卷。';
+                        btn.disabled = false;
+                        imageList.textContent = '';
+                    }
+                } else {
+                    msgDiv.textContent = '预扫描失败: ' + (data.error || '未知错误');
+                    btn.disabled = true;
+                }
+            } catch (e) {
+                msgDiv.textContent = '预扫描网络错误';
+                btn.disabled = true;
+            }
+        }
+
+        async function checkAttachmentsReady() {
+            // Now handled via teacher personal storage — always allow upload
+            // Backend auto-imports from personal storage during upload
+        }
+
+        async function uploadExamTemplate() {
+            if (!profileData) { await loadProfile(); }
+            if (profileData && profileData.exam_count >= profileData.max_exams) {
+                showToast(`每个用户最多上传 ${profileData.max_exams} 份试卷，请先删除旧试卷`, 'error');
+                return;
+            }
+
+            const file = document.getElementById('examFile').files[0];
+            if (!file) { showToast('请选择文件', 'error'); return; }
+
+            const fd = new FormData();
+            fd.append('file', file);
+            try {
+                const res = await fetch(`${API}/template/exam/upload`, { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`试卷 "${data.title}" 创建成功，${data.question_count} 道题目。请前往考试设置完成配置。`);
+                    if (data.mismatches && data.mismatches.length > 0) {
+                        showToast('附件匹配警告: ' + data.mismatches.join('; '), 'error');
+                    }
+                    if (data.attachment_warning) {
+                        showToast(data.attachment_warning, 'error');
+                    }
+                    loadExams();
+                    loadProfile();
+                    // Reset prescan state
+                    prescanData = null;
+                    document.getElementById('uploadExamBtn').disabled = true;
+                    document.getElementById('prescanMessage').textContent = '';
+                    document.getElementById('examFile').value = '';
+                    document.getElementById('prescanImageList').textContent = '';
+                } else {
+                    showToast(data.error || '上传失败', 'error');
+                }
+            } catch (e) { showToast('网络错误', 'error'); }
+        }
+
+        async function uploadStudentTemplate() {
+            const file = document.getElementById('studentFile').files[0];
+            if (!file) { showToast('请选择文件', 'error'); return; }
+            const fd = new FormData();
+            fd.append('file', file);
+            try {
+                const res = await fetch(`${API}/template/student/upload`, { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`成功导入 ${data.count} 名学生`);
+                            } else {
+                    showToast(data.error || '上传失败', 'error');
+                }
+            } catch (e) { showToast('网络错误', 'error'); }
+        }
+
+        async function loadExams() {
+            try {
+                const res = await fetch(`${API}/teacher/exams`);
+                const exams = await res.json();
+                const tbody = document.getElementById('examList');
+                tbody.innerHTML = exams.map(e => {
+                    const templateStatus = e.template_uploaded
+                        ? '<span class="badge badge-done">已上传</span>'
+                        : '<span class="badge badge-pending">未上传</span>';
+                    const settingsStatus = e.settings_complete
+                        ? '<span class="badge badge-done">已设置</span>'
+                        : (e.template_uploaded
+                            ? '<span class="badge badge-pending">待设置</span>'
+                            : '<span class="badge badge-progress">—</span>');
+                    const settingsBtn = e.template_uploaded
+                        ? `<button class="btn btn-settings" style="padding:5px 10px;font-size:0.82em;" onclick="window.location.href='exam-setup.html?exam_id=${e.exam_id}'">考试设置</button>`
+                        : '<button class="btn btn-settings" disabled style="padding:5px 10px;font-size:0.82em;">先上传模板</button>';
+                    // v4.0: Exam number + grading button
+                    const examCode = e.exam_number || '<span style="color:var(--text-tertiary);">待设置</span>';
+                    const gradingBtn = e.template_uploaded
+                        ? `<button class="btn btn-info" style="padding:5px 10px;font-size:0.82em;" onclick="window.location.href='grading.html?exam_id=${e.exam_id}'">阅卷与成绩</button>`
+                        : '<button class="btn btn-info" disabled style="padding:5px 10px;font-size:0.82em;">先上传模板</button>';
+                    const previewBtn = e.template_uploaded
+                        ? `<button class="btn" style="padding:5px 10px;font-size:0.82em;background:var(--accent-dim);color:var(--text-primary);border:1px solid var(--border-default);" onclick="window.open('preview.html?exam_id=${e.exam_id}')">样卷</button>`
+                        : '<button class="btn" disabled style="padding:5px 10px;font-size:0.82em;">先上传模板</button>';
+                    const rosterBtn = e.template_uploaded
+                        ? `<button class="btn btn-primary" style="padding:5px 10px;font-size:0.82em;" onclick="openRosterModal(${e.exam_id}, '${e.title.replace(/'/g, "\\'")}')">设置考生</button>`
+                        : '<button class="btn btn-primary" disabled style="padding:5px 10px;font-size:0.82em;opacity:0.4;">设置考生</button>';
+                    const monitorBtn = e.template_uploaded
+                        ? `<button class="btn" style="padding:5px 10px;font-size:0.82em;border:1px solid var(--border-default);background:var(--warning-dim);color:var(--warning);" onclick="window.open('monitor.html?exam_id=${e.exam_id}')">监视考试</button>`
+                        : '<button class="btn" disabled style="padding:5px 10px;font-size:0.82em;opacity:0.4;">先上传模板</button>';
+                    const deleteBtn = `<button class="btn btn-danger" style="padding:5px 10px;font-size:0.82em;" onclick="deleteSingleExam(${e.exam_id}, '${e.title.replace(/'/g, "\\'")}')">删除</button>`;
+                    return `<tr>
+                        <td title="${e.title}">${e.title}</td>
+                        <td><span style="font-weight:600;color:var(--accent);font-size:1.1em;">${examCode}</span><span style="font-size:0.78em;color:var(--text-tertiary);margin-left:4px;">(${e.roster_count}人)</span></td>
+                        <td>${e.question_count}</td>
+                        <td>${e.created_at}</td>
+                        <td>${templateStatus}</td>
+                        <td>${settingsStatus}</td>
+                        <td>${previewBtn} ${settingsBtn} ${gradingBtn} ${rosterBtn} ${monitorBtn} ${deleteBtn}</td>
+                    </tr>`;
+                }).join('');
+                if (!exams.length) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);">暂无试卷</td></tr>';
+                // Set currentExamId to most recent exam for attachment list
+                if (exams.length > 0) {
+                    currentExamId = exams[0].exam_id;
+                } else {
+                    currentExamId = null;
+                }
+                loadTeacherAttachments();
+            } catch (e) {}
+        }
+
+        async function loadResults() {
+            try {
+                const res = await fetch(`${API}/teacher/results`);
+                const results = await res.json();
+                const tbody = document.getElementById('resultList');
+                tbody.innerHTML = results.map(r => `
+                    <tr>
+                        <td>${r.title}</td>
+                        <td>${r.student_name}</td>
+                        <td>${r.student_id}</td>
+                        <td>${r.start_time}</td>
+                        <td><span class="badge ${r.status === 'submitted' ? 'badge-done' : 'badge-progress'}">${r.status === 'submitted' ? '已提交' : '考试中'}</span></td>
+                        <td>${r.total_score} / --</td>
+                        <td><button class="btn btn-primary" style="padding:5px 10px;font-size:0.82em;" onclick="viewDetail(${r.session_id})">查看详情</button></td>
+                    </tr>
+                `).join('');
+                if (!results.length) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);">暂无记录</td></tr>';
+            } catch (e) {}
+        }
+
+        async function viewDetail(sessionId) {
+            currentSessionId = sessionId;
+            try {
+                const res = await fetch(`${API}/teacher/session/${sessionId}`);
+                const data = await res.json();
+                document.getElementById('detailTitle').textContent = `${data.title} - ${data.student_name} (${data.student_id})`;
+                let html = '';
+                data.questions.forEach((q, i) => {
+                    const isObjective = ['单选题', '多选题', '判断题'].includes(q.q_type);
+                    const isCorrect = q.is_correct === 1;
+                    const isWrong = q.is_correct === 0;
+                    const statusClass = isCorrect ? 'correct' : (isWrong ? 'wrong' : '');
+                    html += `<div class="q-item">
+                        <h4>第 ${i+1} 题 【${q.q_type}】 (${q.max_score} 分)</h4>
+                        <div class="meta">${q.content}</div>`;
+                    if (q.option_a) html += `<div class="meta">A: ${q.option_a} &nbsp; B: ${q.option_b} &nbsp; C: ${q.option_c} &nbsp; D: ${q.option_d}</div>`;
+                    if (q.correct_answer) html += `<div class="meta">正确答案: <b>${q.correct_answer}</b></div>`;
+                    html += `<div class="meta">学生答案: <b class="${statusClass}">${q.answer_text || '(未作答)'}</b> &nbsp; 得分: </div>
+                        <div class="score-input">
+                            <input type="number" id="grade_${q.q_id}" value="${q.actual_score ?? 0}" step="0.5" min="0" max="${q.max_score}">
+                            <span> / ${q.max_score} 分</span>
+                        </div>
+                    </div>`;
+                });
+                document.getElementById('detailBody').innerHTML = html;
+                document.getElementById('detailModal').classList.add('show');
+            } catch (e) { showToast('加载失败', 'error'); }
+        }
+
+        function closeDetail() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+
+        async function saveGrades() {
+            const grades = {};
+            document.querySelectorAll('[id^="grade_"]').forEach(input => {
+                const qId = input.id.replace('grade_', '');
+                grades[qId] = parseFloat(input.value) || 0;
+            });
+            try {
+                const res = await fetch(`${API}/teacher/session/${currentSessionId}/grade`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ grades })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`评分已保存，总分: ${data.total_score}`);
+                    closeDetail();
+                } else {
+                    showToast('保存失败', 'error');
+                }
+            } catch (e) { showToast('网络错误', 'error'); }
+        }
+
+        async function logout() {
+            await fetch(`${API}/teacher/logout`, { method: 'POST' });
+            window.location.href = 'login.html';
+        }
+
+        // ─── Teacher Personal Attachment functions (via /api/teacher/attachments/*) ───
+
+        async function uploadTeacherAttachments() {
+            const input = document.getElementById('teacherAttachmentUpload');
+            const files = input.files;
+            if (!files || files.length === 0) { showToast('请选择文件', 'error'); return; }
+            const formData = new FormData();
+            for (let f of files) { formData.append('files', f); }
+            try {
+                const res = await fetch(API + '/teacher/attachments/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('上传成功', 'success');
+                    loadTeacherAttachments();
+                } else {
+                    showToast(data.error || '上传失败', 'error');
+                }
+            } catch(e) { showToast('上传失败', 'error'); }
+            input.value = '';
+        }
+
+        async function loadTeacherAttachments() {
+            const list = document.getElementById('teacherAttachmentList');
+            try {
+                const res = await fetch(API + '/teacher/attachments/list');
+                const data = await res.json();
+                if (data.attachments && data.attachments.length > 0) {
+                    const displaySize = (size) => {
+                        const kb = size / 1024;
+                        return kb > 1024 ? (kb/1024).toFixed(1) + 'MB' : kb.toFixed(1) + 'KB';
+                    };
+                    list.style.display = 'flex';
+                    list.style.flexWrap = 'wrap';
+                    list.style.gap = '8px';
+                    list.innerHTML = data.attachments.map(a =>
+                        `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;width:220px;background:var(--bg-hover);border-radius:6px;border:1px solid var(--border-default);font-size:0.85em;">
+                            <span style="display:flex;align-items:center;gap:6px;min-width:0;">
+                                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.display_name || a.name}</span>
+                                <span style="font-size:0.8em;color:var(--text-tertiary);flex-shrink:0;">${displaySize(a.size)}</span>
+                            </span>
+                            <span onclick="deleteTeacherAttachment('${a.name}')" style="cursor:pointer;padding:2px 6px;border-radius:4px;color:var(--error);flex-shrink:0;margin-left:6px;" onmouseover="this.style.background='var(--error-dim)'" onmouseout="this.style.background='transparent'">删除</span>
+                        </div>`
+                    ).join('');
+                } else {
+                    list.innerHTML = '<span style="color:var(--text-tertiary);">暂无附件，上传文件后将在此显示</span>';
+                }
+            } catch(e) { list.innerHTML = '<span style="color:var(--text-tertiary);">暂无附件</span>'; }
+        }
+
+        async function deleteTeacherAttachment(name) {
+            if (!confirm('确定要删除附件「' + name + '」吗？')) return;
+            try {
+                const res = await fetch(API + '/teacher/attachments/' + encodeURIComponent(name), { method: 'DELETE' });
+                const data = await res.json();
+                if (data.ok) { showToast('附件已删除', 'success'); loadTeacherAttachments(); }
+                else { showToast(data.error || '删除失败', 'error'); }
+            } catch(e) { showToast('删除失败', 'error'); }
+        }
+
+        // ─── Roster Modal ───
+        let rosterExamId = null;
+        let rosterAllAvailable = [];
+        let rosterSearchTerm = '';
+        let rosterPage = 1;
+        let rosterPerPage = 25;
+        let rosterTotal = 0;
+        let rosterSelected = [];
+        let rosterSelectedFull = {};
+
+        function openRosterModal(examId, title) {
+            rosterExamId = examId;
+            document.getElementById('rosterModalTitle').textContent = `设置考生 — ${title}`;
+            document.getElementById('rosterModal').classList.add('show');
+            rosterSelected = [];
+            rosterSelectedFull = {};
+            rosterSearchTerm = '';
+            rosterPage = 1;
+            document.getElementById('rosterSearch').value = '';
+            loadRosterAvailableStudents();
+            loadRosterSelected();
+        }
+
+        function closeRosterModal() {
+            document.getElementById('rosterModal').classList.remove('show');
+            rosterExamId = null;
+        }
+
+        async function loadRosterAvailableStudents() {
+            const list = document.getElementById('rosterAvailableList');
+            try {
+                rosterPerPage = parseInt(document.getElementById('rosterPerPage').value) || 25;
+                const params = new URLSearchParams({
+                    page: rosterPage,
+                    per_page: rosterPerPage
+                });
+                if (rosterSearchTerm) params.set('search', rosterSearchTerm);
+
+                const res = await fetch(`${API}/teacher/students/paged?${params}`);
+                const data = await res.json();
+                rosterTotal = data.total;
+                rosterAllAvailable = data.items.filter(s => !rosterSelected.includes(s.student_id));
+
+                if (rosterAllAvailable.length === 0) {
+                    list.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:40px 0;">暂无可用学生</div>';
+                } else {
+                    list.innerHTML = rosterAllAvailable.map(s => `
+                        <div class="roster-item" onclick="rosterToggleAvailable('${s.student_id}')">
+                            <input type="checkbox" id="avail_${s.student_id}">
+                            <span class="sid">${s.student_id}</span>
+                            <span class="name">${s.name}</span>
+                            <span class="extra">${s.class_name || ''} ${s.grade || ''}</span>
+                        </div>
+                    `).join('');
+                }
+                document.getElementById('availableCount').textContent = `共 ${rosterTotal} 人`;
+                renderRosterPagination();
+            } catch (e) {
+                list.innerHTML = '<div style="text-align:center;color:var(--error);padding:40px 0;">加载失败</div>';
+            }
+        }
+
+        function renderRosterPagination() {
+            const container = document.getElementById('rosterPagination');
+            const totalPages = Math.ceil(rosterTotal / rosterPerPage);
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+            let html = `<button ${rosterPage <= 1 ? 'disabled' : ''} onclick="rosterGoPage(${rosterPage - 1})">‹</button>`;
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || Math.abs(p - rosterPage) <= 2) {
+                    html += `<button class="${p === rosterPage ? 'active' : ''}" onclick="rosterGoPage(${p})">${p}</button>`;
+                } else if (Math.abs(p - rosterPage) === 3) {
+                    html += `<button disabled>...</button>`;
+                }
+            }
+            html += `<button ${rosterPage >= totalPages ? 'disabled' : ''} onclick="rosterGoPage(${rosterPage + 1})">›</button>`;
+            container.innerHTML = html;
+        }
+
+        function rosterGoPage(page) {
+            rosterPage = page;
+            loadRosterAvailableStudents();
+        }
+
+        function rosterFilterStudents() {
+            rosterSearchTerm = document.getElementById('rosterSearch').value.trim();
+            rosterPage = 1;
+            loadRosterAvailableStudents();
+        }
+
+        function rosterToggleAvailable(sid) {
+            const cb = document.getElementById(`avail_${sid}`);
+            if (cb) cb.checked = !cb.checked;
+            const item = cb?.closest('.roster-item');
+            if (item) item.classList.toggle('selected');
+        }
+
+        function rosterAddSelected() {
+            const checked = rosterAllAvailable.filter(s => {
+                const cb = document.getElementById(`avail_${s.student_id}`);
+                return cb && cb.checked;
+            });
+            if (checked.length === 0) { showToast('请先选择学生', 'error'); return; }
+            for (const s of checked) {
+                if (!rosterSelected.includes(s.student_id)) {
+                    rosterSelected.push(s.student_id);
+                    rosterSelectedFull[s.student_id] = s;
+                }
+            }
+            rosterAllAvailable = rosterAllAvailable.filter(s => !rosterSelected.includes(s.student_id));
+            loadRosterAvailableStudents();
+            renderRosterSelected();
+        }
+
+        function rosterRemoveSelected() {
+            const items = document.querySelectorAll('#rosterSelectedList .roster-item.selected');
+            if (items.length === 0) { showToast('请先选择要移除的学生', 'error'); return; }
+            items.forEach(item => {
+                const sid = item.dataset.sid;
+                rosterSelected = rosterSelected.filter(id => id !== sid);
+                delete rosterSelectedFull[sid];
+            });
+            loadRosterAvailableStudents();
+            renderRosterSelected();
+        }
+
+        function renderRosterSelected() {
+            const list = document.getElementById('rosterSelectedList');
+            const ids = Object.keys(rosterSelectedFull);
+            if (ids.length === 0) {
+                list.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);padding:40px 0;">暂无已选考生</div>';
+            } else {
+                list.innerHTML = ids.map(sid => {
+                    const s = rosterSelectedFull[sid];
+                    return `
+                        <div class="roster-item" data-sid="${sid}" onclick="this.classList.toggle('selected')">
+                            <span class="sid">${s.student_id}</span>
+                            <span class="name">${s.name}</span>
+                            <span class="extra">${s.class_name || ''}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+            document.getElementById('selectedCount').textContent = `已选 ${ids.length} 人`;
+        }
+
+        async function loadRosterSelected() {
+            if (!rosterExamId) return;
+            try {
+                const res = await fetch(`${API}/exam/${rosterExamId}/roster`);
+                const data = await res.json();
+                rosterSelected = data.map(s => s.student_id);
+                rosterSelectedFull = {};
+                for (const s of data) {
+                    rosterSelectedFull[s.student_id] = s;
+                }
+                renderRosterSelected();
+                loadRosterAvailableStudents();
+            } catch (e) {
+                showToast('加载已选考生失败', 'error');
+            }
+        }
+
+        async function rosterSave() {
+            if (!rosterExamId) return;
+            try {
+                const res = await fetch(`${API}/exam/${rosterExamId}/roster`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_ids: rosterSelected })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`已设置 ${data.count} 名考生`);
+                    closeRosterModal();
+                    loadExams();
+                } else {
+                    showToast(data.error || '保存失败', 'error');
+                }
+            } catch (e) {
+                showToast('保存失败', 'error');
+            }
+        }
+
+        // checkLogin();
+        loadProfile();
+        loadExams();
+    </script>
+</body>
+</html>

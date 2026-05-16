@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教师注册 - AI智能考试系统 v3.1</title>
+    <style>
+        :root {
+            --bg-root: #faf9f7;
+            --bg-card: #ffffff;
+            --bg-hover: #f5f3f0;
+            --bg-input: #ffffff;
+            --border-default: #e8e5e0;
+            --border-hover: #d4cfc8;
+            --text-primary: #1a1816;
+            --text-secondary: #6b6560;
+            --text-tertiary: #9e9892;
+            --accent: #1a1816;
+            --accent-dim: rgba(26,24,22,0.06);
+            --success: #4a8c5c;
+            --success-dim: rgba(74,140,92,0.08);
+            --warning: #c4904a;
+            --warning-dim: rgba(196,144,74,0.08);
+            --error: #c45a5a;
+            --error-dim: rgba(196,90,90,0.08);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-root);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .register-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-default);
+            padding: 40px;
+            max-width: 480px;
+            width: 100%;
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .register-header h1 {
+            color: var(--text-primary);
+            font-size: 1.6em;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .register-header p {
+            color: var(--text-secondary);
+            font-size: 0.88em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.88em;
+        }
+        .form-group label .required {
+            color: var(--error);
+        }
+        .form-group input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            font-size: 0.95em;
+            transition: border-color 0.2s;
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--border-hover);
+        }
+        .form-group input.invalid {
+            border-color: var(--error);
+        }
+        .form-group input.valid {
+            border-color: var(--success);
+        }
+        .form-group input::placeholder {
+            color: var(--text-tertiary);
+        }
+        .form-hint {
+            font-size: 0.8em;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+        .form-hint.error {
+            color: var(--error);
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-register {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            margin-top: 10px;
+            border: 1px solid var(--border-default);
+        }
+        .btn-register:hover:not(:disabled) {
+            background: var(--bg-hover);
+        }
+        .btn-register:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .back-link a:hover {
+            color: var(--text-secondary);
+        }
+        .success-message {
+            display: none;
+            background: var(--bg-hover);
+            border: 1px solid var(--success);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .success-message.show {
+            display: block;
+        }
+        .success-message h3 {
+            color: var(--success);
+            margin-bottom: 12px;
+        }
+        .success-message p {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        .success-message .teacher-id {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--success);
+            background: var(--bg-card);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            display: inline-block;
+            margin: 8px 0;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 14px 24px;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-size: 0.95em;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            transform: translateY(-8px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast-error { background: var(--error); }
+        .toast-success { background: var(--success); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+    </style>
+</head>
+<body>
+    <div class="register-card">
+        <div class="register-header">
+            <h1>教师注册</h1>
+            <p>创建您的教师账号，开始使用AI智能考试系统</p>
+        </div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label>用户名 <span class="required">*</span></label>
+                <input type="text" id="username" placeholder="中文/英文/数字组合" required autocomplete="off">
+                <div class="form-hint" id="usernameHint">仅支持中文、英文字母和数字，最长30字符</div>
+            </div>
+
+            <div class="form-group">
+                <label>密码 <span class="required">*</span></label>
+                <input type="password" id="password" placeholder="请设置密码" required>
+            </div>
+
+            <div class="form-group">
+                <label>确认密码 <span class="required">*</span></label>
+                <input type="password" id="confirmPassword" placeholder="请再次输入密码" required>
+                <div class="form-hint" id="passwordHint"></div>
+            </div>
+
+            <div class="form-group">
+                <label>学校 <span class="required">*</span></label>
+                <input type="text" id="school" placeholder="请输入学校名称" required>
+            </div>
+
+            <button type="submit" class="btn btn-register" id="registerBtn">立即注册</button>
+        </form>
+
+        <div class="success-message" id="successMessage">
+            <h3>注册成功！</h3>
+            <p>您的教师ID：</p>
+            <div class="teacher-id" id="teacherIdDisplay"></div>
+            <p>请妥善保管您的教师ID，下次登录可使用用户名或教师ID</p>
+            <button class="btn btn-register" style="margin-top: 16px;" onclick="window.location.href='login.html'">返回登录</button>
+        </div>
+
+        <div class="back-link">
+            <a href="login.html">← 返回登录页面</a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = '/api';
+
+        function showToast(msg, type = 'error') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast-${type} show`;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // Real-time username validation
+        const usernameInput = document.getElementById('username');
+        const usernameHint = document.getElementById('usernameHint');
+        let usernameValid = false;
+
+        usernameInput.addEventListener('input', function() {
+            const val = this.value;
+            if (!val) {
+                this.className = '';
+                usernameHint.className = 'form-hint';
+                usernameHint.textContent = '仅支持中文、英文字母和数字，最长30字符';
+                usernameValid = false;
+                return;
+            }
+            if (val.length > 30) {
+                this.className = 'invalid';
+                usernameHint.className = 'form-hint error';
+                usernameHint.textContent = '用户名不能超过30个字符';
+                usernameValid = false;
+                return;
+            }
+            if (!/^[\u4e00-\u9fa5a-zA-Z0-9]+$/.test(val)) {
+                this.className = 'invalid';
+                usernameHint.className = 'form-hint error';
+                usernameHint.textContent = '只能包含中文、英文字母和数字';
+                usernameValid = false;
+                return;
+            }
+            this.className = 'valid';
+            usernameHint.className = 'form-hint';
+            usernameHint.textContent = '✓ 格式正确';
+            usernameValid = true;
+        });
+
+        // Password match check
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const passwordHint = document.getElementById('passwordHint');
+
+        function checkPasswordMatch() {
+            const pwd = passwordInput.value;
+            const confirm = confirmPasswordInput.value;
+            if (!confirm) {
+                confirmPasswordInput.className = '';
+                passwordHint.textContent = '';
+                return;
+            }
+            if (pwd !== confirm) {
+                confirmPasswordInput.className = 'invalid';
+                passwordHint.className = 'form-hint error';
+                passwordHint.textContent = '两次输入的密码不一致';
+            } else {
+                confirmPasswordInput.className = 'valid';
+                passwordHint.className = 'form-hint';
+                passwordHint.textContent = '✓ 密码一致';
+            }
+        }
+        passwordInput.addEventListener('input', checkPasswordMatch);
+        confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+
+        // Form submission
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            const school = document.getElementById('school').value.trim();
+
+            // Validation
+            if (!usernameValid) {
+                showToast('用户名格式不正确');
+                return;
+            }
+            if (!password) {
+                showToast('请输入密码');
+                return;
+            }
+            if (password !== confirmPassword) {
+                showToast('两次输入的密码不一致');
+                return;
+            }
+            if (!school) {
+                showToast('请输入学校名称');
+                return;
+            }
+
+            const btn = document.getElementById('registerBtn');
+            btn.disabled = true;
+            btn.textContent = '注册中...';
+
+            try {
+                const res = await fetch(`${API}/teacher/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, school })
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    // Show success
+                    document.getElementById('registerForm').style.display = 'none';
+                    document.getElementById('teacherIdDisplay').textContent = data.teacher_id;
+                    document.getElementById('successMessage').classList.add('show');
+                } else {
+                    showToast(data.error || '注册失败，请重试');
+                    btn.disabled = false;
+                    btn.textContent = '立即注册';
+                }
+            } catch (error) {
+                showToast('网络错误，请检查后端是否运行');
+                btn.disabled = false;
+                btn.textContent = '立即注册';
+            }
+        });
+    </script>
+</body>
+</html>

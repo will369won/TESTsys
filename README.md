@@ -24,13 +24,13 @@
 
 - 防作弊 — 切屏检测、防截屏、防复制、题目/选项乱序、开考/交卷限时。
 ## 使用说明
-- 教师访问 /teacher-login.html 或 /register.html 注册/登录
+- 教师访问 http://118.178.26.156/ 注册/登录
 
 - 下载考试模板，填写题目后上传，创建考试
 
 - 配置考试设置（时间、防作弊、题目开关等）
 
-- 学生访问 /student-login.html，输入试卷编号登录
+- 学生访问 http://118.178.26.156/，输入试卷编号登录
 
 - 学生答题，可使用AI/Stata/Python等工具
 
@@ -62,13 +62,13 @@ Tech Stack: Python Flask + SQLite + openpyxl + HTML/CSS/JS
 ## How to Use
 
 ### Deployment
-- Teachers register/login at /teacher-login.html or /register.html
+- Teachers register/login at http://118.178.26.156/
 
 - Download exam template, fill in questions, upload to create an exam
 
 - Configure exam settings (time, anti-cheat, question toggles)
 
-- Students log in at /student-login.html with their exam number
+- Students log in at http://118.178.26.156/ with their exam number
 
 - Students take the exam — answer questions, use AI/Stata/Python tools
 
